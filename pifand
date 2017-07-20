@@ -1,0 +1,42 @@
+#!/bin/bash
+# /etc/init.d/pifand
+
+### BEGIN INIT INFO
+# Provides: oa515
+# Required-Start: $remote_fs $syslog
+# Required-Stop: $remote_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: pifan controller
+# Description: The pifan used to auto-control fan according the temprature.
+### END INIT INFO
+
+DAEMON_NAME=pifand
+DAEMON=/usr/local/bin/pifan
+DAEMON_USER=root
+PID_FILE=/var/run/$DAEMON_NAME.pid
+GPIO_NO=21
+
+. /lib/lsb/init-functions
+
+case "$1" in
+    start)
+        start-stop-daemon --start --background --pidfile $PID_FILE --make-pidfile \
+            --user $DAEMON_USER --chuid $DAEMON_USER \
+            --startas $DAEMON
+        ;;
+    stop)
+        start-stop-daemon --stop --pidfile $PID_FILE
+        # Close GPIO port by Shell
+        echo "$GPIO_NO" > /sys/class/gpio/export
+        echo "$GPIO_NO" > /sys/class/gpio/unexport
+        ;;
+    status)
+        status_of_proc "$DAEMON_NAME" "$DAEMON" && exit 0 || exit $?
+        ;;
+    *)
+        echo "Usage: service pifand {start|stop|status}"
+        exit 1
+        ;;
+esac
+exit 0
